@@ -51,9 +51,9 @@ function M.send_prompt()
     vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "nx", false)
   end
 
-  -- Get cursor screen position
+  -- Get cursor screen position, place window above cursor (border=1 + content=1 + gap=1 = 3)
   local cursor_screenpos = vim.fn.screenpos(0, vim.fn.line("."), vim.fn.col("."))
-  local row = cursor_screenpos.row
+  local row = math.max(0, cursor_screenpos.row - 4)
   local col = cursor_screenpos.col - 1
 
   -- Ensure the window fits on screen (border adds 2 rows/cols)
@@ -61,9 +61,6 @@ function M.send_prompt()
   if width < 30 then
     col = math.max(0, vim.o.columns - 82)
     width = math.min(80, vim.o.columns - col - 2)
-  end
-  if row >= vim.o.lines - 4 then
-    row = math.max(0, row - 4)
   end
 
   local buf = vim.api.nvim_create_buf(false, true)
