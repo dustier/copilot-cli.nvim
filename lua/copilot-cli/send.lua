@@ -17,13 +17,4 @@ function M.send(pane_id, text)
   return r2.code == 0
 end
 
---- Submit the input in the target pane
----@param pane_id string
----@param submit_key string tmux key name (e.g., "Enter", "C-q")
----@return boolean
-function M.submit(pane_id, submit_key)
-  local r = vim.system({ "tmux", "send-keys", "-t", pane_id, submit_key }):wait()
-  return r.code == 0
-end
-
 return M

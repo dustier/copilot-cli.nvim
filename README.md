@@ -31,7 +31,6 @@ A Neovim plugin that connects Neovim with a running [GitHub Copilot CLI](https:/
   opts = {
     auto_detect = true,
     tmux_target = nil, -- Manual override: tmux pane id (e.g., "%42")
-    auto_submit = true, -- Automatically press Enter after sending
   },
   keys = {
     { "<C-l>", "<cmd>CopilotSend<cr>", desc = "Send prompt to Copilot CLI" },
@@ -59,7 +58,6 @@ Then in your Lua config:
 ```lua
 require('copilot-cli').setup({
   auto_detect = true,
-  auto_submit = false,
 })
 
 vim.keymap.set({ "n", "v" }, "<C-l>", "<cmd>CopilotSend<cr>", { desc = "Send prompt to Copilot CLI" })
@@ -74,7 +72,6 @@ use {
     require('copilot-cli').setup({
       auto_detect = true,
       tmux_target = nil,
-      auto_submit = true,
     })
   end
 }
@@ -124,8 +121,6 @@ Use these in your prompts to include context:
 require("copilot-cli").setup({
   auto_detect = true,   -- Auto-detect copilot instances via process tree
   tmux_target = nil,    -- Manual override: tmux pane id (e.g., "%42")
-  auto_submit = true,   -- Automatically submit after pasting the prompt
-  submit_key = "C-q",   -- Key to submit (C-q for autopilot mode, Enter for interactive)
 })
 ```
 

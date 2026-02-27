@@ -6,8 +6,6 @@ local send = require("copilot-cli.send")
 M.config = {
   auto_detect = true,
   tmux_target = nil, -- Manual override: tmux pane id (e.g., "%42")
-  auto_submit = true, -- Automatically submit after sending
-  submit_key = "C-q", -- Key to submit prompt (C-q for autopilot mode, Enter for interactive)
 }
 
 --- Send processed prompt to the detected copilot CLI instance
@@ -29,10 +27,6 @@ local function send_to_copilot(message)
     if not ok then
       vim.notify("Failed to send to Copilot CLI pane", vim.log.levels.ERROR)
       return
-    end
-
-    if M.config.auto_submit then
-      send.submit(pane_id, M.config.submit_key)
     end
 
     vim.notify(string.format("Sent prompt to Copilot CLI (%s)", pane_id), vim.log.levels.INFO)
