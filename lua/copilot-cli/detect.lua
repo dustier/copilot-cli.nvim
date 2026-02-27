@@ -124,11 +124,12 @@ local function is_descendant(children, root_pid, target_pid)
 end
 
 --- Get all tmux panes with their PIDs
----@return { pane_id: string, pid: number }[]
+--- Get all tmux panes with their PIDs and metadata
+---@return { pane_id: string, pid: number, cwd: string, session: string, window_index: string }[]
 local function get_tmux_panes()
   local lines = exec({
     "tmux", "list-panes", "-a",
-    "-F", "#{pane_id}:#{pane_pid}",
+    "-F", "#{pane_id}\t#{pane_pid}\t#{pane_current_path}\t#{session_name}\t#{window_index}",
   })
   if not lines then
     return {}
@@ -136,11 +137,14 @@ local function get_tmux_panes()
 
   local panes = {}
   for _, line in ipairs(lines) do
-    local pane_id, pid = line:match("^(%%%d+):(%d+)$")
+    local pane_id, pid, cwd, session, win_idx = line:match("^(%%%d+)\t(%d+)\t(.-)\t(.-)\t(.+)$")
     if pane_id and pid then
       table.insert(panes, {
         pane_id = pane_id,
         pid = tonumber(pid),
+        cwd = cwd or "",
+        session = session or "",
+        window_index = win_idx or "",
       })
     end
   end
@@ -149,7 +153,7 @@ local function get_tmux_panes()
 end
 
 --- Find copilot instances and map them to tmux panes
----@return { pid: number, pane_id: string, cmd: string }[]
+---@return { pid: number, pane_id: string, cwd: string, session: string, window_index: string }[]
 function M.find_targets()
   local copilot_procs = M.find_copilot_processes()
   if #copilot_procs == 0 then
@@ -170,7 +174,9 @@ function M.find_targets()
         table.insert(targets, {
           pid = proc.pid,
           pane_id = pane.pane_id,
-          cmd = proc.cmd,
+          cwd = pane.cwd,
+          session = pane.session,
+          window_index = pane.window_index,
         })
         break
       end
@@ -219,7 +225,8 @@ function M.get_target(manual_target, cb)
     vim.ui.select(targets, {
       prompt = "Select Copilot CLI instance:",
       format_item = function(item)
-        return string.format("PID %d (%s) → pane %s", item.pid, item.cmd, item.pane_id)
+        local dir = vim.fn.fnamemodify(item.cwd, ":~")
+        return string.format("%s (session: %s, window: %s)", dir, item.session, item.window_index)
       end,
     }, function(choice)
       if choice then
