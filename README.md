@@ -48,6 +48,23 @@ A Neovim plugin that connects Neovim with a running [GitHub Copilot CLI](https:/
 }
 ```
 
+### vim-plug
+
+```vim
+Plug 'dustier/copilot-cli.nvim'
+```
+
+Then in your Lua config:
+
+```lua
+require('copilot-cli').setup({
+  auto_detect = true,
+  auto_submit = false,
+})
+
+vim.keymap.set({ "n", "v" }, "<C-l>", "<cmd>CopilotSend<cr>", { desc = "Send prompt to Copilot CLI" })
+```
+
 ### packer.nvim
 
 ```lua
