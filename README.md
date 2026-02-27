@@ -160,6 +160,13 @@ tmux load-buffer -b test - <<< "hello"
 tmux paste-buffer -b test -d -r -t %42
 ```
 
+## Acknowledgments
+
+This plugin was inspired by and builds upon ideas from:
+
+- [opencode-context.nvim](https://github.com/cousine/opencode-context.nvim) — Placeholder system and tmux sending approach
+- [sidekick.nvim](https://github.com/folke/sidekick.nvim) — Process tree detection strategy and copilot CLI process matching
+
 ## License
 
 MIT License
