@@ -126,6 +126,15 @@ Unlike simpler approaches that only scan the current tmux window, this plugin us
 
 This means the Copilot CLI can be running in **any tmux session or window** — it doesn't need to be in the same window as Neovim.
 
+### Multi-Instance Handling
+
+When multiple Copilot CLI instances are running:
+
+1. First prompt triggers a selection dialog to choose which instance to send to
+2. The selected instance is cached — subsequent prompts go to the same instance automatically
+3. If the cached instance exits, the next prompt re-detects and prompts again if needed
+4. Use `:CopilotSelect` to manually switch to a different instance at any time
+
 ### Sending Strategy
 
 Uses `tmux load-buffer` + `tmux paste-buffer` instead of `tmux send-keys`. This is more reliable for:
