@@ -42,25 +42,76 @@ local function send_to_copilot(message)
   return sent
 end
 
---- Open vim.ui.input prompt, process placeholders, and send
+--- Open a floating input near the cursor, process placeholders, and send
 function M.send_prompt()
   local mode = vim.fn.mode()
   local default_text = ""
   if mode == "v" or mode == "V" or mode == "\22" then
     default_text = "@selection "
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "nx", false)
   end
 
-  vim.ui.input({
-    prompt = "Copilot CLI (@file, @buffers, @here, @selection, @diagnostics): ",
-    default = default_text,
-  }, function(input)
-    if not input or input == "" then
+  -- Get cursor screen position
+  local cursor_screenpos = vim.fn.screenpos(0, vim.fn.line("."), vim.fn.col("."))
+  local row = cursor_screenpos.row
+  local col = cursor_screenpos.col - 1
+
+  -- Ensure the window fits on screen (border adds 2 rows/cols)
+  local width = math.min(80, vim.o.columns - col - 2)
+  if width < 30 then
+    col = math.max(0, vim.o.columns - 82)
+    width = math.min(80, vim.o.columns - col - 2)
+  end
+  if row >= vim.o.lines - 4 then
+    row = math.max(0, row - 4)
+  end
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { default_text })
+  vim.bo[buf].buftype = "nofile"
+
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    row = row,
+    col = col,
+    width = width,
+    height = 1,
+    style = "minimal",
+    border = "rounded",
+    title = " Copilot CLI ",
+    title_pos = "center",
+  })
+
+  vim.cmd("startinsert!")
+
+  local closed = false
+  local function close()
+    if closed then return end
+    closed = true
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_close(win, true)
+    end
+    if vim.api.nvim_buf_is_valid(buf) then
+      vim.api.nvim_buf_delete(buf, { force = true })
+    end
+  end
+
+  local function submit()
+    local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    local input = table.concat(lines, "\n")
+    close()
+    if not input or not input:match("%S") then
       return
     end
-
     local processed = context.replace_placeholders(input)
     send_to_copilot(processed)
-  end)
+  end
+
+  local opts = { buffer = buf, silent = true }
+  vim.keymap.set("i", "<CR>", submit, opts)
+  vim.keymap.set("i", "<Esc>", close, opts)
+  vim.keymap.set("n", "<Esc>", close, opts)
+  vim.keymap.set("n", "q", close, opts)
 end
 
 --- Re-detect / select target copilot CLI instance
