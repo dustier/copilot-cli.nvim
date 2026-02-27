@@ -186,14 +186,17 @@ function M.find_targets()
   return targets
 end
 
---- Check if the cached target is still alive
+--- Check if the cached target is still alive and still a copilot process
 ---@return boolean
 function M.is_target_alive()
   if not M._target then
     return false
   end
   local proc = vim.api.nvim_get_proc(M._target.pid)
-  return proc ~= nil
+  if not proc then
+    return false
+  end
+  return proc.name == "copilot"
 end
 
 --- Get the current target pane_id, detecting if needed.
