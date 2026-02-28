@@ -45,17 +45,20 @@ function M.send_prompt()
     vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "nx", false)
   end
 
-  -- Get cursor screen position, place window above cursor (border=1 + content=1 + gap=1 = 3)
+  -- Anchor position: above cursor
   local cursor_screenpos = vim.fn.screenpos(0, vim.fn.line("."), vim.fn.col("."))
-  local row = math.max(0, cursor_screenpos.row - 4)
+  local anchor_bottom = cursor_screenpos.row - 1
   local col = cursor_screenpos.col - 1
+  local max_height = 10
 
-  -- Ensure the window fits on screen (border adds 2 rows/cols)
   local width = math.min(80, vim.o.columns - col - 2)
   if width < 30 then
     col = math.max(0, vim.o.columns - 82)
     width = math.min(80, vim.o.columns - col - 2)
   end
+
+  local initial_height = 1
+  local row = math.max(0, anchor_bottom - initial_height - 2)
 
   local buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, { default_text })
@@ -66,14 +69,35 @@ function M.send_prompt()
     row = row,
     col = col,
     width = width,
-    height = 1,
+    height = initial_height,
     style = "minimal",
     border = "rounded",
-    title = " Copilot CLI ",
+    title = " Copilot CLI (C-s to send) ",
     title_pos = "center",
   })
 
+  vim.wo[win].wrap = true
+
   vim.cmd("startinsert!")
+
+  -- Auto-resize window as content changes
+  vim.api.nvim_buf_attach(buf, false, {
+    on_lines = function()
+      if not vim.api.nvim_win_is_valid(win) then
+        return true
+      end
+      local line_count = vim.api.nvim_buf_line_count(buf)
+      local new_height = math.max(1, math.min(line_count, max_height))
+      local new_row = math.max(0, anchor_bottom - new_height - 2)
+      vim.api.nvim_win_set_config(win, {
+        relative = "editor",
+        row = new_row,
+        col = col,
+        width = width,
+        height = new_height,
+      })
+    end,
+  })
 
   local closed = false
   local function close()
@@ -99,8 +123,9 @@ function M.send_prompt()
   end
 
   local opts = { buffer = buf, silent = true }
-  vim.keymap.set("i", "<CR>", submit, opts)
-  vim.keymap.set("i", "<Esc>", close, opts)
+  vim.keymap.set("i", "<C-s>", submit, opts)
+  vim.keymap.set("n", "<CR>", submit, opts)
+  vim.keymap.set("i", "<Esc>", "<Esc>", opts)
   vim.keymap.set("n", "<Esc>", close, opts)
   vim.keymap.set("n", "q", close, opts)
 end
