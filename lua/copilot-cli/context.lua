@@ -74,27 +74,14 @@ local function get_visual_selection()
     end_pos = vim.fn.getpos("'>")
   end
 
-  local start_line = start_pos[2] - 1
+  local start_line = start_pos[2]
   local end_line = end_pos[2]
-  local start_col = start_pos[3] - 1
-  local end_col = end_pos[3]
-
-  local lines = vim.api.nvim_buf_get_lines(bufnr, start_line, end_line, false)
-
-  if #lines == 1 then
-    lines[1] = string.sub(lines[1], start_col + 1, end_col)
-  elseif #lines > 1 then
-    lines[1] = string.sub(lines[1], start_col + 1)
-    lines[#lines] = string.sub(lines[#lines], 1, end_col)
-  end
-
-  local selection = table.concat(lines, "\n")
-  return relative_path, start_line, end_line, selection
+  return relative_path, start_line, end_line
 end
 
 local function get_selection()
-  local relative_path, start_line, end_line, selection = get_visual_selection()
-  return string.format("%s (lines %d-%d) - `%s`", relative_path, start_line + 1, end_line, selection)
+  local relative_path, start_line, end_line = get_visual_selection()
+  return string.format("%s:%d-%d", relative_path, start_line, end_line)
 end
 
 local function get_diagnostics()

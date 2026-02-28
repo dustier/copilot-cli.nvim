@@ -112,7 +112,7 @@ Use these in your prompts to include context:
 2. Run `copilot` in one pane
 3. Open Neovim in another pane (can be any tmux session/window)
 4. Press `<C-l>` to open the prompt input
-5. Type your prompt with placeholders and press Enter
+5. Type your prompt with placeholders and press `<C-s>` to send
 6. The prompt is sent to the Copilot CLI pane automatically
 
 ## Configuration
