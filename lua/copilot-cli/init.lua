@@ -72,7 +72,7 @@ function M.send_prompt()
     height = initial_height,
     style = "minimal",
     border = "rounded",
-    title = " Copilot CLI (C-s to send) ",
+    title = " Copilot CLI (\\+Enter newline) ",
     title_pos = "center",
   })
 
@@ -123,7 +123,18 @@ function M.send_prompt()
   end
 
   local opts = { buffer = buf, silent = true }
-  vim.keymap.set("i", "<C-s>", submit, opts)
+  vim.keymap.set("i", "<CR>", function()
+    -- Check if the character before cursor is backslash: \+Enter = newline
+    local cursor = vim.api.nvim_win_get_cursor(win)
+    local line = vim.api.nvim_buf_get_lines(buf, cursor[1] - 1, cursor[1], false)[1] or ""
+    if cursor[2] > 0 and line:sub(cursor[2], cursor[2]) == "\\" then
+      -- Remove the backslash and insert a newline, move cursor to new line
+      vim.api.nvim_buf_set_text(buf, cursor[1] - 1, cursor[2] - 1, cursor[1] - 1, cursor[2], { "", "" })
+      vim.api.nvim_win_set_cursor(win, { cursor[1] + 1, 0 })
+    else
+      submit()
+    end
+  end, opts)
   vim.keymap.set("n", "<CR>", submit, opts)
   vim.keymap.set("i", "<Esc>", "<Esc>", opts)
   vim.keymap.set("n", "<Esc>", close, opts)
