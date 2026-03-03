@@ -94,7 +94,7 @@ Use these in your prompts to include context:
 |-------------|-------------|
 | `@file` | Current file path (relative to cwd) |
 | `@buffers` | All open buffer file paths |
-| `@here` | Cursor position (file, line, column) |
+| `@here` | Cursor position (file, line) |
 | `@selection` | Visual selection content |
 | `@diagnostics` | LSP diagnostics for the current line |
 
