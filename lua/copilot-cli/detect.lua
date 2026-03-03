@@ -202,14 +202,8 @@ end
 
 --- Get the current target pane_id, detecting if needed.
 --- Returns pane_id or nil. If multiple targets found, prompts user to select.
----@param manual_target string? manual tmux pane override
 ---@param cb fun(pane_id: string?)
-function M.get_target(manual_target, cb)
-  if manual_target then
-    cb(manual_target)
-    return
-  end
-
+function M.get_target(cb)
   if M.is_target_alive() then
     cb(M._target.pane_id)
     return

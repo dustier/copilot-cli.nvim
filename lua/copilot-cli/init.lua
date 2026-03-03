@@ -3,18 +3,13 @@ local context = require("copilot-cli.context")
 local detect = require("copilot-cli.detect")
 local send = require("copilot-cli.send")
 
-M.config = {
-  auto_detect = true,
-  tmux_target = nil, -- Manual override: tmux pane id (e.g., "%42")
-}
-
 --- Send processed prompt to the detected copilot CLI instance
 ---@param message string raw prompt text (placeholders already replaced)
 ---@return boolean
 local function send_to_copilot(message)
   local sent = false
 
-  detect.get_target(M.config.tmux_target, function(pane_id)
+  detect.get_target(function(pane_id)
     if not pane_id then
       vim.notify(
         "No Copilot CLI instance found. Make sure `copilot` is running in a tmux pane.",
@@ -144,7 +139,7 @@ end
 --- Re-detect / select target copilot CLI instance
 function M.select_target()
   detect.clear_target()
-  detect.get_target(nil, function(pane_id)
+  detect.get_target(function(pane_id)
     if pane_id then
       vim.notify(string.format("Selected Copilot CLI target: %s", pane_id), vim.log.levels.INFO)
     else
@@ -154,7 +149,6 @@ function M.select_target()
 end
 
 function M.setup(opts)
-  M.config = vim.tbl_deep_extend("force", M.config, opts or {})
 end
 
 return M

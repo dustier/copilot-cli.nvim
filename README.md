@@ -28,10 +28,6 @@ A Neovim plugin that connects Neovim with a running [GitHub Copilot CLI](https:/
 {
   "copilot-cli.nvim",
   dev = true,
-  opts = {
-    auto_detect = true,
-    tmux_target = nil, -- Manual override: tmux pane id (e.g., "%42")
-  },
   keys = {
     { "<C-l>", "<cmd>CopilotSend<cr>", desc = "Send prompt to Copilot CLI" },
     { "<C-l>", "<cmd>CopilotSend<cr>", mode = "v", desc = "Send selection to Copilot CLI" },
@@ -41,8 +37,8 @@ A Neovim plugin that connects Neovim with a running [GitHub Copilot CLI](https:/
     "CopilotSend",
     "CopilotSelect",
   },
-  config = function(_, opts)
-    require("copilot-cli").setup(opts)
+  config = function()
+    require("copilot-cli").setup()
   end,
 }
 ```
@@ -56,11 +52,10 @@ Plug 'dustier/copilot-cli.nvim'
 Then in your Lua config:
 
 ```lua
-require('copilot-cli').setup({
-  auto_detect = true,
-})
+require('copilot-cli').setup()
 
 vim.keymap.set({ "n", "v" }, "<C-l>", "<cmd>CopilotSend<cr>", { desc = "Send prompt to Copilot CLI" })
+vim.keymap.set("n", "<leader>cf", "<cmd>CopilotFocus<cr>", { desc = "Focus Copilot CLI pane" })
 ```
 
 ### packer.nvim
@@ -69,10 +64,7 @@ vim.keymap.set({ "n", "v" }, "<C-l>", "<cmd>CopilotSend<cr>", { desc = "Send pro
 use {
   'copilot-cli.nvim',
   config = function()
-    require('copilot-cli').setup({
-      auto_detect = true,
-      tmux_target = nil,
-    })
+    require('copilot-cli').setup()
   end
 }
 ```
@@ -117,12 +109,9 @@ Use these in your prompts to include context:
 
 ## Configuration
 
-```lua
-require("copilot-cli").setup({
-  auto_detect = true,   -- Auto-detect copilot instances via process tree
-  tmux_target = nil,    -- Manual override: tmux pane id (e.g., "%42")
-})
-```
+No configuration required — the plugin works out of the box.
+
+Call `require("copilot-cli").setup()` to initialize (needed for plugin managers that require it).
 
 ## How It Works
 
