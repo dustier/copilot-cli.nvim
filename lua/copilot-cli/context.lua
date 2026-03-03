@@ -3,7 +3,7 @@ local M = {}
 local function get_current_file_path()
   local bufnr = vim.api.nvim_get_current_buf()
   local filename = vim.api.nvim_buf_get_name(bufnr)
-  return vim.fn.fnamemodify(filename, ":~:.")
+  return "@" .. vim.fn.fnamemodify(filename, ":~:.")
 end
 
 local function get_buffers_paths()
@@ -16,7 +16,7 @@ local function get_buffers_paths()
       if filename and filename ~= "" then
         local relative_path = vim.fn.fnamemodify(filename, ":~:.")
         if relative_path and relative_path ~= "" then
-          table.insert(file_paths, relative_path)
+          table.insert(file_paths, "@" .. relative_path)
         end
       end
     end
@@ -26,7 +26,7 @@ local function get_buffers_paths()
     return "No buffers"
   end
 
-  return table.concat(file_paths, ", ")
+  return table.concat(file_paths, " ")
 end
 
 -- Returns bufnr, relative file path, and cursor position,
@@ -53,7 +53,7 @@ end
 
 local function get_cursor_info()
   local _, relative_path, cursor = get_cursor()
-  return string.format("%s, Line: %d, Column: %d", relative_path, cursor[1], cursor[2] + 1)
+  return string.format("@%s, Line: %d, Column: %d", relative_path, cursor[1], cursor[2] + 1)
 end
 
 local function get_visual_selection()
@@ -81,7 +81,7 @@ end
 
 local function get_selection()
   local relative_path, start_line, end_line = get_visual_selection()
-  return string.format("%s:%d-%d", relative_path, start_line, end_line)
+  return string.format("@%s:%d-%d", relative_path, start_line, end_line)
 end
 
 local function get_diagnostics()
@@ -93,7 +93,7 @@ local function get_diagnostics()
     return ""
   end
 
-  local parts = { string.format("File: %s", relative_path) }
+  local parts = { string.format("@%s", relative_path) }
 
   for _, diagnostic in ipairs(diagnostics) do
     local severity = vim.diagnostic.severity[diagnostic.severity]
