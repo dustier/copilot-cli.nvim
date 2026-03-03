@@ -53,7 +53,7 @@ end
 
 local function get_cursor_info()
   local _, relative_path, cursor = get_cursor()
-  return string.format("@%s, Line: %d", relative_path, cursor[1])
+  return string.format("@%s:%d", relative_path, cursor[1])
 end
 
 local function get_visual_selection()
