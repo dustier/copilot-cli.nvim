@@ -167,17 +167,21 @@ function M.find_targets()
 
   local children = build_process_tree()
   local targets = {}
+  local seen_panes = {}
 
   for _, proc in ipairs(copilot_procs) do
     for _, pane in ipairs(panes) do
       if is_descendant(children, pane.pid, proc.pid) then
-        table.insert(targets, {
-          pid = proc.pid,
-          pane_id = pane.pane_id,
-          cwd = pane.cwd,
-          session = pane.session,
-          window_index = pane.window_index,
-        })
+        if not seen_panes[pane.pane_id] then
+          seen_panes[pane.pane_id] = true
+          table.insert(targets, {
+            pid = proc.pid,
+            pane_id = pane.pane_id,
+            cwd = pane.cwd,
+            session = pane.session,
+            window_index = pane.window_index,
+          })
+        end
         break
       end
     end
