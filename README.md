@@ -5,7 +5,7 @@ A Neovim plugin that connects Neovim with a running [GitHub Copilot CLI](https:/
 ## Features
 
 - 🔍 **Smart process detection** — Finds running `copilot` instances via process tree traversal (not limited to current tmux window)
-- 💬 **Interactive prompt input** with placeholder support
+- 💬 **Floating prompt editor** near the cursor with multiline editing and placeholder support
 - 📄 `@file` — Current file path (relative)
 - 📁 `@buffers` — All open buffer paths
 - 📍 `@here` — Cursor position info
@@ -75,7 +75,7 @@ use {
 
 | Command | Description |
 |---------|-------------|
-| `:CopilotSend` | Open prompt input with placeholder support |
+| `:CopilotSend` | Open the floating prompt editor with placeholder support |
 | `:CopilotSelect` | Re-detect and select Copilot CLI instance |
 
 ### Placeholders
@@ -98,14 +98,23 @@ Use these in your prompts to include context:
 - `"Add tests for @file"`
 - `"Help me at @here in @file"`
 
+### Prompt Editor Controls
+
+- Insert mode `<CR>` — Insert a newline
+- Normal mode `<CR>` — Send the prompt to Copilot CLI
+- `<C-s>` — Send the prompt to Copilot CLI
+- `<C-c>` — Cancel and close the prompt editor
+- `q` — Close the prompt editor in normal mode
+
 ### Workflow
 
 1. Start tmux and split your terminal
 2. Run `copilot` in one pane
 3. Open Neovim in another pane (can be any tmux session/window)
-4. Press `<C-l>` to open the prompt input
-5. Type your prompt with placeholders and press `<C-s>` to send
-6. The prompt is sent to the Copilot CLI pane automatically
+4. Press `<C-l>` to open the prompt editor near the cursor
+5. The editor starts as a single line and expands as your prompt grows
+6. Press `<C-s>` to send
+7. The prompt is sent to the Copilot CLI pane automatically
 
 ## Configuration
 
