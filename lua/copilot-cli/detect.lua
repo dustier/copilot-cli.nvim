@@ -152,6 +152,34 @@ local function get_tmux_panes()
   return panes
 end
 
+---@param panes { pane_id: string, pid: number, cwd: string, session: string, window_index: string }[]
+---@param copilot_procs { pid: number, ppid: number, cmd: string }[]
+---@param children table<number, number[]>
+---@param wanted_pane_id string?
+---@return { pid: number, pane_id: string, cwd: string, session: string, window_index: string }[]
+local function build_targets(panes, copilot_procs, children, wanted_pane_id)
+  local targets = {}
+
+  for _, pane in ipairs(panes) do
+    if not wanted_pane_id or pane.pane_id == wanted_pane_id then
+      for _, proc in ipairs(copilot_procs) do
+        if is_descendant(children, pane.pid, proc.pid) then
+          table.insert(targets, {
+            pid = proc.pid,
+            pane_id = pane.pane_id,
+            cwd = pane.cwd,
+            session = pane.session,
+            window_index = pane.window_index,
+          })
+          break
+        end
+      end
+    end
+  end
+
+  return targets
+end
+
 --- Find copilot instances and map them to tmux panes
 ---@return { pid: number, pane_id: string, cwd: string, session: string, window_index: string }[]
 function M.find_targets()
@@ -166,28 +194,7 @@ function M.find_targets()
   end
 
   local children = build_process_tree()
-  local targets = {}
-  local seen_panes = {}
-
-  for _, proc in ipairs(copilot_procs) do
-    for _, pane in ipairs(panes) do
-      if is_descendant(children, pane.pid, proc.pid) then
-        if not seen_panes[pane.pane_id] then
-          seen_panes[pane.pane_id] = true
-          table.insert(targets, {
-            pid = proc.pid,
-            pane_id = pane.pane_id,
-            cwd = pane.cwd,
-            session = pane.session,
-            window_index = pane.window_index,
-          })
-        end
-        break
-      end
-    end
-  end
-
-  return targets
+  return build_targets(panes, copilot_procs, children)
 end
 
 --- Check if the cached target is still alive
@@ -196,12 +203,25 @@ function M.is_target_alive()
   if not M._target then
     return false
   end
-  -- Verify via /proc that the PID still belongs to a copilot executable
-  local exe = vim.uv.fs_readlink(string.format("/proc/%d/exe", M._target.pid))
-  if not exe then
+
+  local copilot_procs = M.find_copilot_processes()
+  if #copilot_procs == 0 then
     return false
   end
-  return (exe:match("([^/]+)$") or "") == "copilot"
+
+  local panes = get_tmux_panes()
+  if #panes == 0 then
+    return false
+  end
+
+  local children = build_process_tree()
+  local targets = build_targets(panes, copilot_procs, children, M._target.pane_id)
+  if #targets == 0 then
+    return false
+  end
+
+  M._target = targets[1]
+  return true
 end
 
 --- Get the current target pane_id, detecting if needed.
