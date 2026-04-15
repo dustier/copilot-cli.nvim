@@ -3,16 +3,16 @@ local context = require("copilot-cli.context")
 local detect = require("copilot-cli.detect")
 local send = require("copilot-cli.send")
 
---- Send processed prompt to the detected copilot CLI instance
+--- Send processed prompt to the detected CLI target
 ---@param message string raw prompt text (placeholders already replaced)
 ---@return boolean
-local function send_to_copilot(message)
+local function send_to_target(message)
   local sent = false
 
   detect.get_target(function(pane_id)
     if not pane_id then
       vim.notify(
-        "No Copilot CLI instance found. Make sure `copilot` is running in a tmux pane.",
+        "No CLI target found. Make sure `copilot` or `qodercli` is running in a tmux pane.",
         vim.log.levels.ERROR
       )
       return
@@ -20,11 +20,12 @@ local function send_to_copilot(message)
 
     local ok = send.send(pane_id, message)
     if not ok then
-      vim.notify("Failed to send to Copilot CLI pane", vim.log.levels.ERROR)
+      vim.notify("Failed to send to CLI pane", vim.log.levels.ERROR)
       return
     end
 
-    vim.notify(string.format("Sent prompt to Copilot CLI (%s)", pane_id), vim.log.levels.INFO)
+    local tool = detect._target and detect._target.tool or "CLI"
+    vim.notify(string.format("Sent prompt to %s (%s)", tool, pane_id), vim.log.levels.INFO)
     sent = true
   end)
 
@@ -112,7 +113,7 @@ local function open_prompt_editor(default_text)
     height = layout.height,
     style = "minimal",
     border = "rounded",
-    title = " Copilot CLI Prompt ",
+    title = " AI CLI Prompt ",
     title_pos = "center",
   })
 
@@ -165,7 +166,7 @@ local function open_prompt_editor(default_text)
     end
 
     local processed = context.replace_placeholders(input)
-    send_to_copilot(processed)
+    send_to_target(processed)
   end
 
   local opts = { buffer = buf, silent = true }
@@ -191,14 +192,15 @@ function M.send_prompt()
   open_prompt_editor(default_text)
 end
 
---- Re-detect / select target copilot CLI instance
+--- Re-detect / select target CLI instance
 function M.select_target()
   detect.clear_target()
   detect.get_target(function(pane_id)
     if pane_id then
-      vim.notify(string.format("Selected Copilot CLI target: %s", pane_id), vim.log.levels.INFO)
+      local tool = detect._target and detect._target.tool or "CLI"
+      vim.notify(string.format("Selected %s target: %s", tool, pane_id), vim.log.levels.INFO)
     else
-      vim.notify("No Copilot CLI instance found.", vim.log.levels.WARN)
+      vim.notify("No CLI target found.", vim.log.levels.WARN)
     end
   end)
 end

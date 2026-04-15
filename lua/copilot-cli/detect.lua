@@ -1,9 +1,24 @@
 local M = {}
 
 -- Cache for detected target
-M._target = nil -- { pid = number, pane_id = string }
+M._target = nil -- { pid = number, pane_id = string, tool = string }
 
-local copilot_re = vim.regex("\\<copilot\\>")
+--- Supported CLI tools and their detection rules.
+---@type { name: string, re: vim.regex, basename: string, excludes: string[] }[]
+local cli_tools = {
+  {
+    name = "copilot",
+    re = vim.regex("\\<copilot\\>"),
+    basename = "copilot",
+    excludes = { "language%-server" },
+  },
+  {
+    name = "qodercli",
+    re = vim.regex("\\<qodercli\\>"),
+    basename = "qodercli",
+    excludes = {},
+  },
+}
 
 --- Execute a command and return stdout lines
 ---@param cmd string[]
@@ -16,24 +31,35 @@ local function exec(cmd)
   return vim.split(result.stdout, "\n", { plain = true, trimempty = true })
 end
 
---- Check if a process command matches copilot CLI (not language-server, not nvim, not node)
+--- Check if a process command matches any supported CLI tool.
+--- Returns the tool name on match, or nil.
 ---@param cmd_str string
----@return boolean
-local function is_copilot_proc(cmd_str)
-  if not copilot_re:match_str(cmd_str) then
-    return false
-  end
-  -- Exclude processes that merely contain "copilot" in paths or arguments
-  if cmd_str:find("language%-server") then return false end
-  if cmd_str:find("^nvim") or cmd_str:find("^%-?vim") then return false end
-  if cmd_str:find("^node") then return false end
-  -- The command should start with "copilot" or have copilot as the main executable
+---@return string?
+local function match_cli_proc(cmd_str)
+  -- Common exclusions for all tools
+  if cmd_str:find("^nvim") or cmd_str:find("^%-?vim") then return nil end
+  if cmd_str:find("^node") then return nil end
+
   local basename = cmd_str:match("^(%S+)")
-  if basename then
-    basename = basename:match("([^/]+)$") or basename
-    if basename == "copilot" then return true end
+  if not basename then return nil end
+  basename = basename:match("([^/]+)$") or basename
+
+  for _, tool in ipairs(cli_tools) do
+    if tool.re:match_str(cmd_str) then
+      local excluded = false
+      for _, pattern in ipairs(tool.excludes) do
+        if cmd_str:find(pattern) then
+          excluded = true
+          break
+        end
+      end
+      if not excluded and basename == tool.basename then
+        return tool.name
+      end
+    end
   end
-  return false
+
+  return nil
 end
 
 --- Build ps command with user filter when available, falling back to -e
@@ -52,9 +78,9 @@ local function ps_cmd()
   return cmd
 end
 
---- Find all running copilot processes via ps
----@return { pid: number, ppid: number, cmd: string }[]
-function M.find_copilot_processes()
+--- Find all running CLI tool processes (copilot and qodercli) via ps
+---@return { pid: number, ppid: number, cmd: string, tool: string }[]
+function M.find_cli_processes()
   local cmd = ps_cmd()
   vim.list_extend(cmd, { "-ww", "-o", "pid,ppid,args" })
 
@@ -67,12 +93,16 @@ function M.find_copilot_processes()
   -- Skip header line
   for i = 2, #lines do
     local pid, ppid, args = lines[i]:match("^%s*(%d+)%s+(%d+)%s+(.*)$")
-    if pid and ppid and args and is_copilot_proc(args) then
-      table.insert(procs, {
-        pid = tonumber(pid),
-        ppid = tonumber(ppid),
-        cmd = args,
-      })
+    if pid and ppid and args then
+      local tool = match_cli_proc(args)
+      if tool then
+        table.insert(procs, {
+          pid = tonumber(pid),
+          ppid = tonumber(ppid),
+          cmd = args,
+          tool = tool,
+        })
+      end
     end
   end
 
@@ -153,16 +183,16 @@ local function get_tmux_panes()
 end
 
 ---@param panes { pane_id: string, pid: number, cwd: string, session: string, window_index: string }[]
----@param copilot_procs { pid: number, ppid: number, cmd: string }[]
+---@param cli_procs { pid: number, ppid: number, cmd: string, tool: string }[]
 ---@param children table<number, number[]>
 ---@param wanted_pane_id string?
----@return { pid: number, pane_id: string, cwd: string, session: string, window_index: string }[]
-local function build_targets(panes, copilot_procs, children, wanted_pane_id)
+---@return { pid: number, pane_id: string, cwd: string, session: string, window_index: string, tool: string }[]
+local function build_targets(panes, cli_procs, children, wanted_pane_id)
   local targets = {}
 
   for _, pane in ipairs(panes) do
     if not wanted_pane_id or pane.pane_id == wanted_pane_id then
-      for _, proc in ipairs(copilot_procs) do
+      for _, proc in ipairs(cli_procs) do
         if is_descendant(children, pane.pid, proc.pid) then
           table.insert(targets, {
             pid = proc.pid,
@@ -170,6 +200,7 @@ local function build_targets(panes, copilot_procs, children, wanted_pane_id)
             cwd = pane.cwd,
             session = pane.session,
             window_index = pane.window_index,
+            tool = proc.tool,
           })
           break
         end
@@ -180,11 +211,11 @@ local function build_targets(panes, copilot_procs, children, wanted_pane_id)
   return targets
 end
 
---- Find copilot instances and map them to tmux panes
----@return { pid: number, pane_id: string, cwd: string, session: string, window_index: string }[]
+--- Find CLI tool instances and map them to tmux panes
+---@return { pid: number, pane_id: string, cwd: string, session: string, window_index: string, tool: string }[]
 function M.find_targets()
-  local copilot_procs = M.find_copilot_processes()
-  if #copilot_procs == 0 then
+  local cli_procs = M.find_cli_processes()
+  if #cli_procs == 0 then
     return {}
   end
 
@@ -194,7 +225,7 @@ function M.find_targets()
   end
 
   local children = build_process_tree()
-  return build_targets(panes, copilot_procs, children)
+  return build_targets(panes, cli_procs, children)
 end
 
 --- Check if the cached target is still alive
@@ -204,8 +235,8 @@ function M.is_target_alive()
     return false
   end
 
-  local copilot_procs = M.find_copilot_processes()
-  if #copilot_procs == 0 then
+  local cli_procs = M.find_cli_processes()
+  if #cli_procs == 0 then
     return false
   end
 
@@ -215,7 +246,7 @@ function M.is_target_alive()
   end
 
   local children = build_process_tree()
-  local targets = build_targets(panes, copilot_procs, children, M._target.pane_id)
+  local targets = build_targets(panes, cli_procs, children, M._target.pane_id)
   if #targets == 0 then
     return false
   end
@@ -245,10 +276,10 @@ function M.get_target(cb)
   else
     -- Multiple targets, let user choose
     vim.ui.select(targets, {
-      prompt = "Select Copilot CLI instance:",
+      prompt = "Select CLI target:",
       format_item = function(item)
         local dir = vim.fn.fnamemodify(item.cwd, ":~")
-        return string.format("%s (session: %s, window: %s)", dir, item.session, item.window_index)
+        return string.format("[%s] %s (session: %s, window: %s)", item.tool, dir, item.session, item.window_index)
       end,
     }, function(choice)
       if choice then
