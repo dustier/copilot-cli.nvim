@@ -113,7 +113,7 @@ local function open_prompt_editor(default_text)
     height = layout.height,
     style = "minimal",
     border = "rounded",
-    title = " AI CLI Prompt ",
+    title = " CLI Prompt ",
     title_pos = "center",
   })
 

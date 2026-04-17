@@ -1,6 +1,6 @@
 # cli-bridge.nvim
 
-A Neovim plugin that bridges Neovim with AI CLI tools running in tmux. Send context-rich prompts from your editor directly to [GitHub Copilot CLI](https://github.com/github/copilot-cli) or [Qoder CLI](https://qoder.com) running in another tmux pane.
+A Neovim plugin that bridges Neovim with CLI tools running in tmux. Send context-rich prompts from your editor directly to [GitHub Copilot CLI](https://github.com/github/copilot-cli) or [Qoder CLI](https://qoder.com) running in another tmux pane.
 
 ## Features
 
@@ -30,13 +30,13 @@ A Neovim plugin that bridges Neovim with AI CLI tools running in tmux. Send cont
   "cli-bridge.nvim",
   dev = true,
   keys = {
-    { "<C-l>", "<cmd>AISend<cr>", desc = "Send prompt to AI CLI" },
-    { "<C-l>", "<cmd>AISend<cr>", mode = "v", desc = "Send selection to AI CLI" },
-    { "<leader>cs", "<cmd>AISelect<cr>", desc = "Select AI CLI instance" },
+    { "<C-l>", "<cmd>CliSend<cr>", desc = "Send prompt to CLI" },
+    { "<C-l>", "<cmd>CliSend<cr>", mode = "v", desc = "Send selection to CLI" },
+    { "<leader>cs", "<cmd>CliSelect<cr>", desc = "Select CLI instance" },
   },
   cmd = {
-    "AISend",
-    "AISelect",
+    "CliSend",
+    "CliSelect",
   },
   config = function()
     require("copilot-cli").setup()
@@ -55,7 +55,7 @@ Then in your Lua config:
 ```lua
 require('copilot-cli').setup()
 
-vim.keymap.set({ "n", "v" }, "<C-l>", "<cmd>AISend<cr>", { desc = "Send prompt to AI CLI" })
+vim.keymap.set({ "n", "v" }, "<C-l>", "<cmd>CliSend<cr>", { desc = "Send prompt to CLI" })
 ```
 
 ### packer.nvim
@@ -75,8 +75,8 @@ use {
 
 | Command | Description |
 |---------|-------------|
-| `:AISend` | Open the floating prompt editor with placeholder support |
-| `:AISelect` | Re-detect and select CLI instance |
+| `:CliSend` | Open the floating prompt editor with placeholder support |
+| `:CliSelect` | Re-detect and select CLI instance |
 
 ### Placeholders
 
@@ -143,7 +143,7 @@ When multiple CLI instances are running:
 1. First prompt triggers a selection dialog showing each instance with its tool name (`copilot` or `qodercli`), working directory, session, and window
 2. The selected instance is cached — subsequent prompts go to the same instance automatically
 3. If the cached instance exits, the next prompt re-detects and prompts again if needed
-4. Use `:AISelect` to manually switch to a different instance at any time
+4. Use `:CliSelect` to manually switch to a different instance at any time
 
 ### Sending Strategy
 

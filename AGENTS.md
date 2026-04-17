@@ -30,7 +30,7 @@ Targeted module checks (inside Neovim):
 
 Runtime flow: **user command -> prompt editor -> placeholder expansion -> target detection/cache -> tmux paste**.
 
-- **`plugin/copilot-cli.lua`** -- Entrypoint. Registers `:AISend` and `:AISelect` commands, delegates to `lua/copilot-cli/init.lua`.
+- **`plugin/copilot-cli.lua`** -- Entrypoint. Registers `:CliSend` and `:CliSelect` commands, delegates to `lua/copilot-cli/init.lua`.
 
 - **`lua/copilot-cli/init.lua`** -- Orchestration and prompt UI. Opens a scratch floating buffer near the cursor that grows dynamically (up to 10 lines). Normal-mode `<CR>` / `<C-s>` submit; insert-mode `<CR>` is a newline. Visual mode prefills `@selection `. Calls `detect.get_target()` then `send.send()` on submission.
 

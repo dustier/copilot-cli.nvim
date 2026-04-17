@@ -33,9 +33,9 @@ Targeted module checks:
 
 The runtime flow is: **user command → prompt editor → placeholder expansion → target detection/cache → tmux paste**.
 
-1. `plugin/copilot-cli.lua` is the entrypoint that registers the `:AISend` and `:AISelect` commands and delegates everything else to `lua/copilot-cli/init.lua`.
+1. `plugin/copilot-cli.lua` is the entrypoint that registers the `:CliSend` and `:CliSelect` commands and delegates everything else to `lua/copilot-cli/init.lua`.
 
-2. `init.lua` owns the prompt UI and orchestration. `AISend` opens a scratch floating buffer near the cursor, starts at one line, grows with content, keeps insert-mode `<CR>` as newline, and maps normal-mode `<CR>` / `<C-s>` to submission. Visual mode preloads `@selection ` before opening the prompt.
+2. `init.lua` owns the prompt UI and orchestration. `CliSend` opens a scratch floating buffer near the cursor, starts at one line, grows with content, keeps insert-mode `<CR>` as newline, and maps normal-mode `<CR>` / `<C-s>` to submission. Visual mode preloads `@selection ` before opening the prompt.
 
 3. `context.lua` turns prompt placeholders into references derived from the current editing state. The placeholders intentionally expand to compact references such as `@path/to/file`, `@path/to/file:42`, or `@path/to/file:10-20` rather than file contents. `get_cursor()` specifically resolves through floating windows back to the underlying editing window so prompt floats do not break `@here` or diagnostics lookup.
 
