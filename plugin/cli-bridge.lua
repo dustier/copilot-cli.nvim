@@ -1,18 +1,18 @@
-if vim.g.loaded_copilot_cli then
+if vim.g.loaded_cli_bridge then
   return
 end
-vim.g.loaded_copilot_cli = 1
+vim.g.loaded_cli_bridge = 1
 
-local copilot_cli = require("copilot-cli")
+local cli_bridge = require("cli-bridge")
 
 vim.api.nvim_create_user_command("CliSend", function()
-  copilot_cli.send_prompt()
+  cli_bridge.send_prompt()
 end, {
   desc = "Send prompt to CLI (copilot/qodercli) with placeholder support",
 })
 
 vim.api.nvim_create_user_command("CliSelect", function()
-  copilot_cli.select_target()
+  cli_bridge.select_target()
 end, {
   desc = "Re-detect and select CLI instance",
 })

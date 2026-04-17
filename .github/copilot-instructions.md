@@ -1,4 +1,4 @@
-# Copilot Instructions for copilot-cli.nvim
+# Copilot Instructions for cli-bridge.nvim
 
 ## Build, Test, and Lint Commands
 
@@ -8,32 +8,32 @@ Full plugin smoke test:
 
 ```bash
 nvim --headless -u NONE \
-  '+set runtimepath+=/absolute/path/to/copilot-cli.nvim' \
-  '+lua require("copilot-cli").setup()' \
+  '+set runtimepath+=/absolute/path/to/cli-bridge.nvim' \
+  '+lua require("cli-bridge").setup()' \
   '+qa!'
 ```
 
 Interactive load in a real Neovim session:
 
 ```vim
-:set runtimepath+=/absolute/path/to/copilot-cli.nvim
-:lua require("copilot-cli").setup()
+:set runtimepath+=/absolute/path/to/cli-bridge.nvim
+:lua require("cli-bridge").setup()
 ```
 
 Targeted module checks:
 
 ```vim
-:lua require("copilot-cli.detect").find_targets()
-:lua require("copilot-cli.detect").find_cli_processes()
-:lua require("copilot-cli.context").replace_placeholders("Explain @here in @file")
-:lua require("copilot-cli.send").send("%36", "test")
+:lua require("cli-bridge.detect").find_targets()
+:lua require("cli-bridge.detect").find_cli_processes()
+:lua require("cli-bridge.context").replace_placeholders("Explain @here in @file")
+:lua require("cli-bridge.send").send("%36", "test")
 ```
 
 ## High-Level Architecture
 
 The runtime flow is: **user command → prompt editor → placeholder expansion → target detection/cache → tmux paste**.
 
-1. `plugin/copilot-cli.lua` is the entrypoint that registers the `:CliSend` and `:CliSelect` commands and delegates everything else to `lua/copilot-cli/init.lua`.
+1. `plugin/cli-bridge.lua` is the entrypoint that registers the `:CliSend` and `:CliSelect` commands and delegates everything else to `lua/cli-bridge/init.lua`.
 
 2. `init.lua` owns the prompt UI and orchestration. `CliSend` opens a scratch floating buffer near the cursor, starts at one line, grows with content, keeps insert-mode `<CR>` as newline, and maps normal-mode `<CR>` / `<C-s>` to submission. Visual mode preloads `@selection ` before opening the prompt.
 

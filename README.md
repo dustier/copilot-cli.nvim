@@ -39,7 +39,7 @@ A Neovim plugin that bridges Neovim with CLI tools running in tmux. Send context
     "CliSelect",
   },
   config = function()
-    require("copilot-cli").setup()
+    require("cli-bridge").setup()
   end,
 }
 ```
@@ -53,7 +53,7 @@ Plug 'dustier/cli-bridge.nvim'
 Then in your Lua config:
 
 ```lua
-require('copilot-cli').setup()
+require('cli-bridge').setup()
 
 vim.keymap.set({ "n", "v" }, "<C-l>", "<cmd>CliSend<cr>", { desc = "Send prompt to CLI" })
 ```
@@ -64,7 +64,7 @@ vim.keymap.set({ "n", "v" }, "<C-l>", "<cmd>CliSend<cr>", { desc = "Send prompt 
 use {
   'cli-bridge.nvim',
   config = function()
-    require('copilot-cli').setup()
+    require('cli-bridge').setup()
   end
 }
 ```
@@ -120,7 +120,7 @@ Use these in your prompts to include context:
 
 No configuration required — the plugin works out of the box.
 
-Call `require("copilot-cli").setup()` to initialize (needed for plugin managers that require it).
+Call `require("cli-bridge").setup()` to initialize (needed for plugin managers that require it).
 
 ## How It Works
 

@@ -1,7 +1,7 @@
 local M = {}
-local context = require("copilot-cli.context")
-local detect = require("copilot-cli.detect")
-local send = require("copilot-cli.send")
+local context = require("cli-bridge.context")
+local detect = require("cli-bridge.detect")
+local send = require("cli-bridge.send")
 
 --- Send processed prompt to the detected CLI target
 ---@param message string raw prompt text (placeholders already replaced)
