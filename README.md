@@ -1,24 +1,25 @@
-# copilot-cli.nvim
+# cli-bridge.nvim
 
-A Neovim plugin that connects Neovim with a running [GitHub Copilot CLI](https://github.com/github/copilot-cli) instance. Send context-rich prompts from your editor directly to Copilot CLI running in another tmux pane.
+A Neovim plugin that bridges Neovim with AI CLI tools running in tmux. Send context-rich prompts from your editor directly to [GitHub Copilot CLI](https://github.com/github/copilot-cli) or [Qoder CLI](https://qoder.com) running in another tmux pane.
 
 ## Features
 
-- 🔍 **Smart process detection** — Finds running `copilot` instances via process tree traversal (not limited to current tmux window)
-- 💬 **Floating prompt editor** near the cursor with multiline editing and placeholder support
-- 📄 `@file` — Current file path (relative)
-- 📁 `@buffers` — All open buffer paths
-- 📍 `@here` — Cursor position info
-- ✂️ `@selection` — Visual selection content
-- 🔍 `@diagnostics` — LSP diagnostics for current line
-- 🖥️ **Reliable tmux sending** — Uses `load-buffer` + `paste-buffer` (handles long text and special characters)
-- ⚡ **Multi-instance support** — Detects multiple Copilot CLI instances and lets you choose
+- **Multi-tool support** — Works with both `copilot` and `qodercli`
+- **Smart process detection** — Finds running CLI instances via process tree traversal (not limited to current tmux window)
+- **Floating prompt editor** near the cursor with multiline editing and placeholder support
+- `@file` — Current file path (relative)
+- `@buffers` — All open buffer paths
+- `@here` — Cursor position info
+- `@selection` — Visual selection content
+- `@diagnostics` — LSP diagnostics for current line
+- **Reliable tmux sending** — Uses `load-buffer` + `paste-buffer` (handles long text and special characters)
+- **Multi-instance support** — Detects multiple CLI instances and lets you choose
 
 ## Requirements
 
 - Neovim >= 0.8.0
-- `tmux` — Required for sending messages to Copilot CLI
-- `copilot` CLI running in a tmux pane (any session/window)
+- `tmux` — Required for sending messages to CLI tools
+- `copilot` or `qodercli` running in a tmux pane (any session/window)
 
 ## Installation
 
@@ -26,16 +27,16 @@ A Neovim plugin that connects Neovim with a running [GitHub Copilot CLI](https:/
 
 ```lua
 {
-  "copilot-cli.nvim",
+  "cli-bridge.nvim",
   dev = true,
   keys = {
-    { "<C-l>", "<cmd>CopilotSend<cr>", desc = "Send prompt to Copilot CLI" },
-    { "<C-l>", "<cmd>CopilotSend<cr>", mode = "v", desc = "Send selection to Copilot CLI" },
-    { "<leader>cs", "<cmd>CopilotSelect<cr>", desc = "Select Copilot CLI instance" },
+    { "<C-l>", "<cmd>AISend<cr>", desc = "Send prompt to AI CLI" },
+    { "<C-l>", "<cmd>AISend<cr>", mode = "v", desc = "Send selection to AI CLI" },
+    { "<leader>cs", "<cmd>AISelect<cr>", desc = "Select AI CLI instance" },
   },
   cmd = {
-    "CopilotSend",
-    "CopilotSelect",
+    "AISend",
+    "AISelect",
   },
   config = function()
     require("copilot-cli").setup()
@@ -46,7 +47,7 @@ A Neovim plugin that connects Neovim with a running [GitHub Copilot CLI](https:/
 ### vim-plug
 
 ```vim
-Plug 'dustier/copilot-cli.nvim'
+Plug 'dustier/cli-bridge.nvim'
 ```
 
 Then in your Lua config:
@@ -54,15 +55,14 @@ Then in your Lua config:
 ```lua
 require('copilot-cli').setup()
 
-vim.keymap.set({ "n", "v" }, "<C-l>", "<cmd>CopilotSend<cr>", { desc = "Send prompt to Copilot CLI" })
-vim.keymap.set("n", "<leader>cf", "<cmd>CopilotFocus<cr>", { desc = "Focus Copilot CLI pane" })
+vim.keymap.set({ "n", "v" }, "<C-l>", "<cmd>AISend<cr>", { desc = "Send prompt to AI CLI" })
 ```
 
 ### packer.nvim
 
 ```lua
 use {
-  'copilot-cli.nvim',
+  'cli-bridge.nvim',
   config = function()
     require('copilot-cli').setup()
   end
@@ -75,8 +75,8 @@ use {
 
 | Command | Description |
 |---------|-------------|
-| `:CopilotSend` | Open the floating prompt editor with placeholder support |
-| `:CopilotSelect` | Re-detect and select Copilot CLI instance |
+| `:AISend` | Open the floating prompt editor with placeholder support |
+| `:AISelect` | Re-detect and select CLI instance |
 
 ### Placeholders
 
@@ -101,20 +101,20 @@ Use these in your prompts to include context:
 ### Prompt Editor Controls
 
 - Insert mode `<CR>` — Insert a newline
-- Normal mode `<CR>` — Send the prompt to Copilot CLI
-- `<C-s>` — Send the prompt to Copilot CLI
+- Normal mode `<CR>` — Send the prompt
+- `<C-s>` — Send the prompt
 - `<C-c>` — Cancel and close the prompt editor
 - `q` — Close the prompt editor in normal mode
 
 ### Workflow
 
 1. Start tmux and split your terminal
-2. Run `copilot` in one pane
+2. Run `copilot` or `qodercli` in one pane
 3. Open Neovim in another pane (can be any tmux session/window)
 4. Press `<C-l>` to open the prompt editor near the cursor
 5. The editor starts as a single line and expands as your prompt grows
 6. Press `<C-s>` to send
-7. The prompt is sent to the Copilot CLI pane automatically
+7. The prompt is sent to the CLI pane automatically
 
 ## Configuration
 
@@ -128,22 +128,22 @@ Call `require("copilot-cli").setup()` to initialize (needed for plugin managers 
 
 Unlike simpler approaches that only scan the current tmux window, this plugin uses **process tree detection**:
 
-1. Runs `ps` to find all processes matching `copilot` (excluding `language-server`)
+1. Runs `ps` to find all processes matching `copilot` or `qodercli`
 2. Builds a process tree from all running processes
 3. Lists all tmux panes and their root PIDs
-4. Maps each copilot process to its containing tmux pane via tree traversal
+4. Maps each CLI process to its containing tmux pane via tree traversal
 5. Caches the result until the target process exits
 
-This means the Copilot CLI can be running in **any tmux session or window** — it doesn't need to be in the same window as Neovim.
+This means the CLI tool can be running in **any tmux session or window** — it doesn't need to be in the same window as Neovim.
 
 ### Multi-Instance Handling
 
-When multiple Copilot CLI instances are running:
+When multiple CLI instances are running:
 
-1. First prompt triggers a selection dialog to choose which instance to send to
+1. First prompt triggers a selection dialog showing each instance with its tool name (`copilot` or `qodercli`), working directory, session, and window
 2. The selected instance is cached — subsequent prompts go to the same instance automatically
 3. If the cached instance exits, the next prompt re-detects and prompts again if needed
-4. Use `:CopilotSelect` to manually switch to a different instance at any time
+4. Use `:AISelect` to manually switch to a different instance at any time
 
 ### Sending Strategy
 
@@ -154,13 +154,13 @@ Uses `tmux load-buffer` + `tmux paste-buffer` instead of `tmux send-keys`. This 
 
 ## Troubleshooting
 
-### "No Copilot CLI instance found"
+### "No CLI target found"
 
-- Make sure `copilot` is running in a tmux pane
-- Check that the process is visible: `ps aux | grep copilot`
-- Try manual target: set `tmux_target = "%42"` (find pane id with `tmux list-panes -a -F "#{pane_id} #{pane_current_command}"`)
+- Make sure `copilot` or `qodercli` is running in a tmux pane
+- Check that the process is visible: `ps aux | grep -E 'copilot|qodercli'`
+- Verify tmux pane exists: `tmux list-panes -a -F "#{pane_id} #{pane_current_command}"`
 
-### "Failed to send to Copilot CLI pane"
+### "Failed to send to CLI pane"
 
 - Verify the tmux pane still exists
 - Check tmux buffer permissions
@@ -171,8 +171,8 @@ Uses `tmux load-buffer` + `tmux paste-buffer` instead of `tmux send-keys`. This 
 # List all tmux panes with their commands
 tmux list-panes -a -F '#{pane_id} #{pane_pid} #{pane_current_command}'
 
-# Find copilot processes
-ps -u $USER -ww -o pid,ppid,args | grep copilot
+# Find CLI processes
+ps -u $USER -ww -o pid,ppid,args | grep -E 'copilot|qodercli'
 
 # Test manual send
 tmux load-buffer -b test - <<< "hello"
@@ -184,7 +184,7 @@ tmux paste-buffer -b test -d -r -t %42
 This plugin was inspired by and builds upon ideas from:
 
 - [opencode-context.nvim](https://github.com/cousine/opencode-context.nvim) — Placeholder system and tmux sending approach
-- [sidekick.nvim](https://github.com/folke/sidekick.nvim) — Process tree detection strategy and copilot CLI process matching
+- [sidekick.nvim](https://github.com/folke/sidekick.nvim) — Process tree detection strategy and CLI process matching
 
 ## License
 
