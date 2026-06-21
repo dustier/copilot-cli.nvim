@@ -12,7 +12,7 @@ local function send_to_target(message)
   detect.get_target(function(pane_id)
     if not pane_id then
       vim.notify(
-        "No CLI target found. Make sure `copilot` or `qodercli` is running in a tmux pane.",
+        "No CLI target found. Make sure `copilot`, `qodercli`, `codex`, or `opencode` is running in a tmux pane.",
         vim.log.levels.ERROR
       )
       return

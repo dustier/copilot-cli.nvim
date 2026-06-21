@@ -1,10 +1,10 @@
 # cli-bridge.nvim
 
-A Neovim plugin that bridges Neovim with CLI tools running in tmux. Send context-rich prompts from your editor directly to [GitHub Copilot CLI](https://github.com/github/copilot-cli) or [Qoder CLI](https://qoder.com) running in another tmux pane.
+A Neovim plugin that bridges Neovim with CLI tools running in tmux. Send context-rich prompts from your editor directly to `copilot`, `qodercli`, `codex`, or `opencode` running in another tmux pane.
 
 ## Features
 
-- **Multi-tool support** — Works with both `copilot` and `qodercli`
+- **Multi-tool support** — Works with `copilot`, `qodercli`, `codex`, and `opencode`
 - **Smart process detection** — Finds running CLI instances via process tree traversal (not limited to current tmux window)
 - **Floating prompt editor** near the cursor with multiline editing and placeholder support
 - `@file` — Current file path (relative)
@@ -19,7 +19,7 @@ A Neovim plugin that bridges Neovim with CLI tools running in tmux. Send context
 
 - Neovim >= 0.8.0
 - `tmux` — Required for sending messages to CLI tools
-- `copilot` or `qodercli` running in a tmux pane (any session/window)
+- `copilot`, `qodercli`, `codex`, or `opencode` running in a tmux pane (any session/window)
 
 ## Installation
 
@@ -109,7 +109,7 @@ Use these in your prompts to include context:
 ### Workflow
 
 1. Start tmux and split your terminal
-2. Run `copilot` or `qodercli` in one pane
+2. Run `copilot`, `qodercli`, `codex`, or `opencode` in one pane
 3. Open Neovim in another pane (can be any tmux session/window)
 4. Press `<C-l>` to open the prompt editor near the cursor
 5. The editor starts as a single line and expands as your prompt grows
@@ -128,7 +128,7 @@ Call `require("cli-bridge").setup()` to initialize (needed for plugin managers t
 
 Unlike simpler approaches that only scan the current tmux window, this plugin uses **process tree detection**:
 
-1. Runs `ps` to find all processes matching `copilot` or `qodercli`
+1. Runs `ps` to find all supported CLI processes
 2. Builds a process tree from all running processes
 3. Lists all tmux panes and their root PIDs
 4. Maps each CLI process to its containing tmux pane via tree traversal
@@ -140,7 +140,7 @@ This means the CLI tool can be running in **any tmux session or window** — it 
 
 When multiple CLI instances are running:
 
-1. First prompt triggers a selection dialog showing each instance with its tool name (`copilot` or `qodercli`), working directory, session, and window
+1. First prompt triggers a selection dialog showing each instance with its tool name, working directory, session, and window
 2. The selected instance is cached — subsequent prompts go to the same instance automatically
 3. If the cached instance exits, the next prompt re-detects and prompts again if needed
 4. Use `:CliSelect` to manually switch to a different instance at any time
@@ -156,8 +156,8 @@ Uses `tmux load-buffer` + `tmux paste-buffer` instead of `tmux send-keys`. This 
 
 ### "No CLI target found"
 
-- Make sure `copilot` or `qodercli` is running in a tmux pane
-- Check that the process is visible: `ps aux | grep -E 'copilot|qodercli'`
+- Make sure `copilot`, `qodercli`, `codex`, or `opencode` is running in a tmux pane
+- Check that the process is visible: `ps aux | grep -E 'copilot|qodercli|codex|opencode'`
 - Verify tmux pane exists: `tmux list-panes -a -F "#{pane_id} #{pane_current_command}"`
 
 ### "Failed to send to CLI pane"
@@ -172,7 +172,7 @@ Uses `tmux load-buffer` + `tmux paste-buffer` instead of `tmux send-keys`. This 
 tmux list-panes -a -F '#{pane_id} #{pane_pid} #{pane_current_command}'
 
 # Find CLI processes
-ps -u $USER -ww -o pid,ppid,args | grep -E 'copilot|qodercli'
+ps -u $USER -ww -o pid,ppid,args | grep -E 'copilot|qodercli|codex|opencode'
 
 # Test manual send
 tmux load-buffer -b test - <<< "hello"

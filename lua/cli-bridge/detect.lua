@@ -4,18 +4,31 @@ local M = {}
 M._target = nil -- { pid = number, pane_id = string, tool = string }
 
 --- Supported CLI tools and their detection rules.
----@type { name: string, re: vim.regex, basename: string, excludes: string[] }[]
+---@type { name: string, re: vim.regex, basename: string, node_script?: string, excludes: string[] }[]
 local cli_tools = {
   {
     name = "copilot",
     re = vim.regex("\\<copilot\\>"),
     basename = "copilot",
-    excludes = { "language%-server" },
+    excludes = { "language%-server", "^node%s" },
   },
   {
     name = "qodercli",
     re = vim.regex("\\<qodercli\\>"),
     basename = "qodercli",
+    excludes = {},
+  },
+  {
+    name = "codex",
+    re = vim.regex("\\<codex\\>"),
+    basename = "codex",
+    node_script = "@openai/codex/bin/codex%.js$",
+    excludes = {},
+  },
+  {
+    name = "opencode",
+    re = vim.regex("\\<opencode\\>"),
+    basename = "opencode",
     excludes = {},
   },
 }
@@ -38,11 +51,11 @@ end
 local function match_cli_proc(cmd_str)
   -- Common exclusions for all tools
   if cmd_str:find("^nvim") or cmd_str:find("^%-?vim") then return nil end
-  if cmd_str:find("^node") then return nil end
 
   local basename = cmd_str:match("^(%S+)")
   if not basename then return nil end
   basename = basename:match("([^/]+)$") or basename
+  local node_script = cmd_str:match("^%S+%s+(%S+)")
 
   for _, tool in ipairs(cli_tools) do
     if tool.re:match_str(cmd_str) then
@@ -53,7 +66,13 @@ local function match_cli_proc(cmd_str)
           break
         end
       end
-      if not excluded and basename == tool.basename then
+      if
+        not excluded
+        and (
+          basename == tool.basename
+          or (basename == "node" and node_script and tool.node_script and node_script:find(tool.node_script))
+        )
+      then
         return tool.name
       end
     end
@@ -78,7 +97,7 @@ local function ps_cmd()
   return cmd
 end
 
---- Find all running CLI tool processes (copilot and qodercli) via ps
+--- Find all running CLI tool processes via ps
 ---@return { pid: number, ppid: number, cmd: string, tool: string }[]
 function M.find_cli_processes()
   local cmd = ps_cmd()
